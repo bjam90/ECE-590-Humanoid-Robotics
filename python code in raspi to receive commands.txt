@@ -1,0 +1,43 @@
+#Code by: Mahmoud Al Dabbas
+#05-22-2015
+#Python code in the Raxpberry pi to receive over UDP keyboard commands from the laptob linux terminal , 
+ 
+import time
+import socket
+import sys
+import math
+import serial 
+ser = serial.Serial('/dev/ttyAMA0', 57600)
+ 
+if __name__ == "__main__":
+## ---------- UDP Start ---------------
+      UDP_IP = "192.168.1.121"
+      UDP_PORT = 12346
+      sock = socket.socket(socket.AF_INET, # Internet
+                           socket.SOCK_DGRAM) # UDP
+      sock.bind((UDP_IP, UDP_PORT))
+## ---------- UDP End -----------------
+x=00
+y = 00
+while(True):
+        y, addr = sock.recvfrom(2) # buffer size is 1024 bytes 
+        print "client received =",y
+        x=int(y)
+        print "client received =",x
+        if x==23:
+                print 'you entered Right --> ', x
+                ser.write('1')
+        elif x==24:
+                print 'you entered Up --> ', x
+                ser.write('7')
+        elif x==25:
+                print 'you entered Down --> ', x
+                ser.write('8')
+        elif x==26:
+                print 'you entered Left --> ', x
+                ser.write('2')
+        else:
+                print 'you entered', int(x)-48
+                ser.write(str(int(x)-48))
+        time.sleep(.2)
+ 
