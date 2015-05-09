@@ -1,5 +1,5 @@
 
-#Code by: Mahmoud Al Dabbas
+
 #05-22-2015
 #Python code to send over UDP keyboard commands to the Raspberry Pi, 
 #the Keyboard strokes are sent once they are pressed.

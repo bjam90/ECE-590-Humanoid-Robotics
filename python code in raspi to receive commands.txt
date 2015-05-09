@@ -1,4 +1,4 @@
-#Code by: Mahmoud Al Dabbas
+
 #05-22-2015
 #Python code in the Raxpberry pi to receive over UDP keyboard commands from the laptob linux terminal , 
  

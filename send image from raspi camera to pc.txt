@@ -1,0 +1,34 @@
+
+
+#05-22-2015
+#send image from camera (TCP/IP) on the Raspberry pi to the laptop  linux interface
+ 
+ 
+import sys
+import time
+import socket
+import cv2.cv as cv
+import cv2
+import numpy as np
+ 
+#initialize TCP socket
+IP = "192.168.1.132"
+PORT = 50100
+ 
+send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+send.connect((IP,PORT))
+cap = cv2.VideoCapture(0)   #initialize camera
+ 
+while True:
+    photosize, frame = cap.read()
+    print "size of original photo is : ",sys.getsizeof(photosize)
+    resized_img = cv2.resize(frame, (160, 120))
+    resized_img_tostring=resized_img.tostring()
+    resized_img_toUnit8=np.fromstring(resized_img_tostring,np.uint8)
+    print sys.getsizeof(resized_img_toUnit8)
+    print len(resized_img_toUnit8.tostring())
+    imgstr=resized_img_toUnit8.tostring()
+    send.send("start")
+    send.send(resized_img_toUnit8.tostring(),15000)
+    print IP, PORT    
+ 

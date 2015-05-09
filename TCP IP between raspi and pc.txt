@@ -1,4 +1,4 @@
-#Code by: Mahmoud Al Dabbas
+
 #05-22-2015
 #Receive image wireless (TCP/IP) from the Raspberry pi and view it on the screen for the end user
  
