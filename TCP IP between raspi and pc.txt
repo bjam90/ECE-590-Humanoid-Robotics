@@ -1,0 +1,43 @@
+#Code by: Mahmoud Al Dabbas
+#05-22-2015
+#Receive image wireless (TCP/IP) from the Raspberry pi and view it on the screen for the end user
+ 
+import numpy as np
+import cv2
+import time
+from cv2 import cv
+import socket
+import sys
+ 
+if __name__ == "__main__":
+ 
+      IP = "192.168.1.132"
+      PORT = 50100
+ 
+      sock = socket.socket(socket.AF_INET, # Internet
+                           socket.SOCK_STREAM) # UDP
+      sock.bind(('', PORT))
+      sock.listen(10)
+      packet_size = 57600
+      socket,address = sock.accept()
+ 
+      while(True):
+       data = socket.recv(5) # receive some data to check beginning of streem
+       #print data
+       if (data == "start"):
+        data = "" #empty the data
+        while True:
+           while len(data) < packet_size:
+               data = socket.recv(1024)      #receive the image              
+               imagedata += data       #ammend the  image to the received part
+           print len(imagedata)     #print hte length of the received data
+           break
+        img_str = imagedata
+        if len(img_str) == packet_size:       
+              nparr = np.fromstring(img_str, np.uint8).byteswap() 
+         rm = np.reshape(nparr, (120,160,3),'C') 
+         rrm = cv2.resize(rm, (640,480))
+         cv2.imshow('frame',rrm)
+         if cv2.waitKey(1) & 0xFF == ord('q'):
+             ipCam.close()
+             break
