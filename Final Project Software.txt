@@ -1,0 +1,567 @@
+ 
+ 
+
+#05-5-2015
+#Receive image wireless (TCP/IP) from the Raspberry pi and view it on the screen for the end user
+ 
+import numpy as np
+import cv2
+import time
+from cv2 import cv
+import socket
+import sys
+ 
+if __name__ == "__main__":
+ 
+      IP = "192.168.1.132"
+      PORT = 50100
+ 
+      sock = socket.socket(socket.AF_INET, # Internet
+                           socket.SOCK_STREAM) # UDP
+      sock.bind(('', PORT))
+      sock.listen(10)
+      packet_size = 57600
+      socket,address = sock.accept()
+ 
+      while(True):
+       data = socket.recv(5) # receive some data to check beginning of streem
+       #print data
+       if (data == "start"):
+        data = "" #empty the data
+        while True:
+           while len(data) < packet_size:
+               data = socket.recv(1024)      #receive the image              
+               imagedata += data       #ammend the  image to the received part
+           print len(imagedata)     #print hte length of the received data
+           break
+        img_str = imagedata
+        if len(img_str) == packet_size:       
+              nparr = np.fromstring(img_str, np.uint8).byteswap() 
+         rm = np.reshape(nparr, (120,160,3),'C') 
+         rrm = cv2.resize(rm, (640,480))
+         cv2.imshow('frame',rrm)
+         if cv2.waitKey(1) & 0xFF == ord('q'):
+             ipCam.close()
+             break
+ 
+ 
+#05-22-2015
+#Python code to send over UDP keyboard commands to the Robot Arm Raspberry Pi, 
+#the Keyboard strokes are sent once they are pressed.
+#it might affect your terminal way of presenting text, just open another terminal once you are done.
+ 
+ 
+sendKeyboardCommandtoRaspi.py
+import sys
+import time
+import socket
+import cv2.cv as cv
+import cv2
+import numpy as np
+import pickle
+import curses
+import serial
+ 
+IP = "192.168.1.121"
+PORT_send = 12346
+ 
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+ 
+x=0
+x=00
+y = 00
+stdscr = curses.initscr()
+stdscr.keypad(1)
+while(True):
+         c = stdscr.getch()
+         if c==curses.KEY_RIGHT:
+                  print 'you entered Right --> ', c
+                  sock.sendto(str(23), (IP, PORT_send))
+         elif c==curses.KEY_UP:
+                  print 'you entered Up --> ', c
+                  sock.sendto(str(24), (IP, PORT_send))
+         else:
+                  print 'you entered', c
+                  sock.sendto(str(c), (IP, PORT_send))
+ 
+ 
+ 
+ 
+ 
+#05-22-2015
+#Python code in the Robot Arm Raxpberry pi to receive over UDP keyboard commands from the laptob linux terminal ,  and then send the commands vi serial bus to the OpenCM9.04to the 
+ 
+import time
+import socket
+import sys
+import math
+import serial 
+ser = serial.Serial('/dev/ttyAMA0', 57600)
+ 
+if __name__ == "__main__":
+## ---------- UDP Start ---------------
+      UDP_IP = "192.168.1.121"
+      UDP_PORT = 12346
+      sock = socket.socket(socket.AF_INET, # Internet
+                           socket.SOCK_DGRAM) # UDP
+      sock.bind((UDP_IP, UDP_PORT))
+## ---------- UDP End -----------------
+x=00
+y = 00
+while(True):
+        y, addr = sock.recvfrom(2) # buffer size is 1024 bytes 
+        print "client received =",y
+        x=int(y)
+        print "client received =",x
+        if x==23:
+                print 'you entered Right --> ', x
+                ser.write('1')
+        elif x==24:
+                print 'you entered Up --> ', x
+                ser.write('7')
+        elif x==25:
+                print 'you entered Down --> ', x
+                ser.write('8')
+        elif x==26:
+                print 'you entered Left --> ', x
+                ser.write('2')
+        else:
+                print 'you entered', int(x)-48
+                ser.write(str(int(x)-48))
+        time.sleep(.2)
+ 
+ 
+
+#05-22-2015
+#send image from camera (TCP/IP) on the Raspberry pi to the laptop  linux interface
+ 
+ 
+import sys
+import time
+import socket
+import cv2.cv as cv
+import cv2
+import numpy as np
+ 
+#initialize TCP socket
+IP = "192.168.1.132"
+PORT = 50100
+ 
+send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+send.connect((IP,PORT))
+cap = cv2.VideoCapture(0)   #initialize camera
+ 
+while True:
+    photosize, frame = cap.read()
+    print "size of original photo is : ",sys.getsizeof(photosize)
+    resized_img = cv2.resize(frame, (160, 120))
+    resized_img_tostring=resized_img.tostring()
+    resized_img_toUnit8=np.fromstring(resized_img_tostring,np.uint8)
+    print sys.getsizeof(resized_img_toUnit8)
+    print len(resized_img_toUnit8.tostring())
+    imgstr=resized_img_toUnit8.tostring()
+    send.send("start")
+    send.send(resized_img_toUnit8.tostring(),15000)
+    print IP, PORT    
+ 
+ 
+ 
+ 
+ 
+ 
+#05-05-2015
+#Python code in the Car Robot Raxpberry pi to receive over UDP keyboard commands from the laptob linux terminal ,  and then send the commands via general input/output GIOP pins to the OpenCM9.04 on the Robot car.
+ 
+import time
+import socket
+import sys
+import math
+import serial 
+#ser = serial.Serial('/dev/ttyAMA0', 57600)
+ 
+if __name__ == "__main__":
+## ---------- UDP Start ---------------
+      UDP_IP = "192.168.1.137"
+      UDP_PORT = 12346
+#      MESSAGE = "Hello, World!"
+      sock = socket.socket(socket.AF_INET, # Internet
+                           socket.SOCK_DGRAM) # UDP
+      sock.bind((UDP_IP, UDP_PORT))
+## ---------- UDP End -----------------
+x=00
+y = 00
+while(True):
+y, addr = sock.recvfrom(3) # buffer size is 1024 bytes 
+print "client received =",y
+x=int(y)
+print "client received =",x
+if x==97:
+print 'you entered Right --> ', x
+f=open('/sys/class/gpio/gpio2/value','w')
+print f
+f.write('1')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio3/value','w')
+print f
+f.write('0')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio4/value','w')
+print f
+f.write('0')
+time.sleep(.1)
+f.close()
+ 
+elif x==122:
+print 'you entered Up --> ', x
+f=open('/sys/class/gpio/gpio2/value','w')
+print f
+f.write('0')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio3/value','w')
+print f
+f.write('0')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio4/value','w')
+print f
+f.write('0')
+time.sleep(.1)
+f.close()
+ 
+elif x==119:
+print 'you entered Down --> ', x
+f=open('/sys/class/gpio/gpio2/value','w')
+print f
+f.write('0')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio3/value','w')
+print f
+f.write('1')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio4/value','w')
+print f
+f.write('0')
+time.sleep(.1)
+f.close()
+ 
+elif x==100:
+print 'you entered Left --> ', x
+f=open('/sys/class/gpio/gpio2/value','w')
+print f
+f.write('1')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio3/value','w')
+print f
+f.write('1')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio4/value','w')
+print f
+f.write('0')
+time.sleep(.1)
+f.close()
+elif x==115:
+print 'you entered STOP --> ', x
+f=open('/sys/class/gpio/gpio2/value','w')
+print f
+f.write('1')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio3/value','w')
+print f
+f.write('1')
+time.sleep(0)
+f.close()
+f=open('/sys/class/gpio/gpio4/value','w')
+print f
+f.write('1')
+time.sleep(.1)
+f.close()
+ 
+time.sleep(.2)
+# ser.write(str(x))
+ 
+ 
+ 
+
+#05-05-2015
+#C++ code (arduino code) in the Car Robot OpenCm9.04 to receive from the raspberry pi via general input/output GIOP.
+ 
+ 
+#define DXL_BUS_SERIAL1 1  //Dynamixel on Serial1(USART1)  <-OpenCM9.04
+#define DXL_BUS_SERIAL2 2  //Dynamixel on Serial2(USART2)  <-LN101,BT210
+#define DXL_BUS_SERIAL3 3  //Dynamixel on Serial3(USART3)  <-OpenCM 485EXP
+/* Dynamixel ID defines */
+#define ID_NUM_1 1
+#define ID_NUM_2 2
+#define ID_NUM_3 3
+/* Control table defines */
+#define GOAL_SPEED 32
+ 
+#define CCW_Angle_Limit 8
+#define CONTROL_MODE 11
+ 
+Dynamixel Dxl(DXL_BUS_SERIAL1);
+ 
+void setup() {
+  // Dynamixel 2.0 Protocol -> 0: 9600, 1: 57600, 2: 115200, 3: 1Mbps 
+  Dxl.begin(3);
+  
+    Dxl.wheelMode(ID_NUM_1); //wheelMode() is to use wheel mode
+    Dxl.wheelMode(ID_NUM_2); //wheelMode() is to use wheel mode
+    pinMode(BOARD_LED_PIN, OUTPUT);
+    pinMode(D10, INPUT_PULLDOWN);
+    pinMode(D11, INPUT_PULLDOWN);
+    pinMode(D12, INPUT_PULLDOWN);
+ 
+ }
+int speed = 200;
+ 
+void loop() 
+{
+   int input2 = digitalRead(D10);
+   int input3 = digitalRead(D12);
+   int input4 = digitalRead(D11);
+ 
+  if(input2==LOW&&input3==LOW&&input4==LOW)
+  {  forward();
+  delay(100);
+  }
+ 
+  if(input2==LOW&&input3==HIGH&&input4==LOW)
+  {  backward();
+  delay(100);
+  }
+  if(input2==HIGH&&input3==LOW&&input4==LOW)
+  {  right();
+  delay(100);
+  }
+  if(input2==HIGH&&input3==HIGH&&input4==LOW)
+  {  left();
+  delay(100);
+  }
+  if(input4==HIGH)
+  {  stop();
+  delay(100);
+  }
+ 
+ 
+ 
+}
+ 
+ 
+void slow()
+{
+speed = 200;
+}
+ 
+void forward()
+{
+  //forward
+  Dxl.goalSpeed(ID_NUM_1, speed| 0x400); 
+  Dxl.goalSpeed(ID_NUM_2, speed); 
+  digitalWrite(BOARD_LED_PIN, LOW); // set to as HIGH LED is turn-off  
+}
+ 
+void backward()
+{
+  //forward
+  Dxl.goalSpeed(ID_NUM_1,speed); 
+  Dxl.goalSpeed(ID_NUM_2,speed| 0x400); 
+  digitalWrite(BOARD_LED_PIN, HIGH); // set to as HIGH LED is turn-off  
+}
+ 
+void right()
+{
+  //forward
+  Dxl.goalSpeed(ID_NUM_1,speed| 0x400); 
+  Dxl.goalSpeed(ID_NUM_2,speed| 0x400); 
+  digitalWrite(BOARD_LED_PIN, HIGH); // set to as HIGH LED is turn-off  
+}
+ 
+ 
+void left()
+{
+  //forward
+  Dxl.goalSpeed(ID_NUM_1,speed); 
+  Dxl.goalSpeed(ID_NUM_2,speed); 
+  digitalWrite(BOARD_LED_PIN, HIGH); // set to as HIGH LED is turn-off  
+}
+ 
+void stop()
+{
+  //forward
+  Dxl.goalSpeed(ID_NUM_1,0); 
+  Dxl.goalSpeed(ID_NUM_2,0); 
+  digitalWrite(BOARD_LED_PIN, LOW); // set to as HIGH LED is turn-off  
+}
+ 
+ 
+ 
+ 
+ 
+#Code by: Mahmoud Al Dabbas
+#05-05-2015
+#C++ code (arduino code) in the Arm Robot OpenCm9.04 to receive from the raspberry pi via serial communicaion
+ 
+Dynamixel Dxl(DXL_BUS_SERIAL1);
+ 
+void close(){
+  Dxl.goalPosition(5, 450);
+  delay(1000);
+}
+ 
+void Pos1(){
+ Dxl.goalPosition(1, 200);
+  Dxl.goalPosition(2, 500);
+  Dxl.goalPosition(3, 500);
+  Dxl.goalPosition(4, 500);
+  Dxl.goalPosition(5, 200);
+  delay(3000);
+}
+ 
+void Pos2(){
+  Dxl.goalPosition(1, 200);
+  Dxl.goalPosition(2, 310);
+  Dxl.goalPosition(3, 310);
+  Dxl.goalPosition(4, 310);
+  Dxl.goalPosition(5, 200);
+  delay(3000);
+}
+ 
+void Pos3(){
+  Dxl.goalPosition(1, 750);
+  Dxl.goalPosition(2, 413);
+  Dxl.goalPosition(3, 50);
+  Dxl.goalPosition(4, 413);
+  Dxl.goalPosition(5, 600);
+  delay(3000); 
+  }
+  
+void Pos4(){
+  Dxl.goalPosition(1, 612);
+  Dxl.goalPosition(2, 250);
+  Dxl.goalPosition(3, 250);
+  Dxl.goalPosition(4, 800);
+  Dxl.goalPosition(5, 600);
+  delay(3000); 
+  }
+ 
+ 
+void open(){
+  Dxl.goalPosition(5, 200);
+  delay(1000);
+}  
+int angle=20;
+int pos1=200,pos2=ceil(angle*3.44)+207,pos3=517-2*ceil(angle*3.44),pos4=672,pos5=400;
+void setup() {
+  // Initialize the dynamixel bus:
+  
+  // Dynamixel 2.0 Baudrate -> 0: 9600, 1: 57600, 2: 115200, 3: 1Mbps  
+  Dxl.begin(3);  
+  SerialUSB.attachInterrupt(usbInterrupt);
+  Serial2.begin(57600);
+  Serial2.attachInterrupt(serialInterrupt);
+  pinMode(BOARD_LED_PIN, OUTPUT);  //toggleLED_Pin_Out
+ 
+  
+  Dxl.maxTorque(1,600); 
+  Dxl.maxTorque(2,1024); 
+  Dxl.maxTorque(3,1024); 
+  Dxl.maxTorque(4,1024); 
+  Dxl.maxTorque(5,500); 
+          
+  Dxl.jointMode(1); //jointMode() is to use position mode
+  Dxl.jointMode(2);
+  Dxl.jointMode(3);
+  Dxl.jointMode(4);
+  Dxl.jointMode(5);
+ 
+  Dxl.goalSpeed(1, 30);
+  Dxl.goalSpeed(2, 50);
+  Dxl.goalSpeed(3, 50);
+  Dxl.goalSpeed(4, 50);
+  Dxl.goalSpeed(5, 500);
+ 
+ 
+  Dxl.goalPosition(1, pos1);
+  Dxl.goalPosition(2, pos2);
+  Dxl.goalPosition(3, pos3);
+  Dxl.goalPosition(4, pos4);
+  Dxl.goalPosition(5, pos5);
+  delay(3000);
+ 
+}
+ 
+void serialInterrupt(byte buffer){
+    if((buffer-48)==1)
+    {pos1=pos1+15;  Dxl.goalPosition(1, pos1);SerialUSB.println("I received 1.");SerialUSB.println(pos1);}
+    if((buffer-48)==2)
+    {pos1=pos1-15;  Dxl.goalPosition(1, pos1);SerialUSB.println("I received 2.");}
+    if((buffer-48)==3)
+    {pos2=pos2+15;pos3=pos3-30;pos4=pos4+15;  Dxl.goalPosition(2, pos2); 
+    Dxl.goalPosition(3, pos3); Dxl.goalPosition(4, pos4);SerialUSB.println("I received 3.");}
+    if((buffer-48)==4)
+    {pos2=pos2-15;pos3=pos3+30;pos4=pos4-15;  Dxl.goalPosition(2, pos2); 
+    Dxl.goalPosition(3, pos3); Dxl.goalPosition(4, pos4);SerialUSB.println("I received 4.");}
+    if((buffer-48)==5)
+    {pos5=pos5-50;  Dxl.goalPosition(5, pos5);SerialUSB.println("I received 5.");}
+    if((buffer-48)==6)
+    {pos5=pos5+50;  Dxl.goalPosition(5, pos5);SerialUSB.println("I received 6.");}
+    if((buffer-48)==7)
+    {pos4=pos4+50;  Dxl.goalPosition(4, pos4);SerialUSB.println("I received 7.");}
+    if((buffer-48)==8)
+    {pos4=pos4-50;  Dxl.goalPosition(4, pos4);SerialUSB.println("I received 8.");}
+    if((buffer-48)==9)
+    {pos3=pos3-50;  Dxl.goalPosition(3, pos3);SerialUSB.println("I received 9.");}
+    if((buffer-48)==0)
+    {pos3=pos3+50;  Dxl.goalPosition(3, pos3);SerialUSB.println("I received 0.");}
+ 
+}
+ 
+void usbInterrupt(byte* buffer, byte nCount){
+//  SerialUSB.print("nCount =");
+    SerialUSB.println(nCount);    
+    for(unsigned int i=0; i < nCount;i++)  //printf_SerialUSB_Buffer[N]_receive_Data
+    SerialUSB.println((char)buffer[i]);
+    SerialUSB.println((char)buffer[0]);
+    if((char)buffer[0]=='1')
+    {pos1=pos1+15;  Dxl.goalPosition(1, pos1);SerialUSB.println("I received 1.");SerialUSB.println((char)buffer[0]);}
+    if((char)buffer[0]=='2')
+    {pos1=pos1-15;  Dxl.goalPosition(1, pos1);SerialUSB.println("I received 2.");}
+    if((char)buffer[0]=='3')
+    {pos2=pos2+15;pos3=pos3-30;pos4=pos4+15;  Dxl.goalPosition(2, pos2); 
+    Dxl.goalPosition(3, pos3); Dxl.goalPosition(4, pos4);SerialUSB.println("I received 3.");}
+    if((char)buffer[0]=='4')
+    {pos2=pos2-15;pos3=pos3+30;pos4=pos4-15;  Dxl.goalPosition(2, pos2); 
+    Dxl.goalPosition(3, pos3); Dxl.goalPosition(4, pos4);SerialUSB.println("I received 4.");}
+    if((char)buffer[0]=='5')
+    {pos5=pos5-15;  Dxl.goalPosition(5, pos5);SerialUSB.println("I received 5.");}
+    if((char)buffer[0]=='6')
+    {pos5=pos5+15;  Dxl.goalPosition(5, pos5);SerialUSB.println("I received 6.");
+    SerialUSB.print("pos5 is:");SerialUSB.print(pos5);}
+    if((char)buffer[0]=='7')
+    {pos4=pos4+15;  Dxl.goalPosition(4, pos4);SerialUSB.println("I received 7.");
+    SerialUSB.print("pos4 is:");SerialUSB.print(pos4);}
+ 
+}
+ 
+ 
+void loop() {
+  toggleLED();
+  delay(100);
+  //open();
+  //delay(1000);
+  //close();
+  //Pos1();
+  //delay(1000);
+ 
+ 
+ 
+}
